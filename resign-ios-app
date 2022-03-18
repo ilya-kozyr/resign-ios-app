@@ -35,9 +35,9 @@ declare -a appsInPayload=()
 appsInPayload=$(find . -name '*app' | sed 's|^\./||')
 cd ..
 if [[ ${#appsInPayload[*]} -gt 1 ]]; then
-  echo "There is more than one .app in Payload/ (${appsInPayload[*]})"
-  echo -e "${redColor}Resigning failed${noColor}"
-  exit 1
+    echo "There is more than one .app in Payload/ (${appsInPayload[*]})"
+    echo -e "${redColor}Resigning failed${noColor}"
+    exit 1
 fi
 app=$appsInPayload
 
@@ -53,26 +53,26 @@ echo "Extracting \"Entitlements\" from ProvisioningProfile.plist and writing to 
 echo "Embedding \"$provisioningProfile\" into \"$app\"..."
 cp "$provisioningProfile" Payload/"$app"/embedded.mobileprovision
 if [[ -n $bundleIdentifier ]]; then
-  echo "Resigning \"$app\" with bundle identifier \"$bundleIdentifier\""
-  /usr/libexec/PlistBuddy -x -c "Set :CFBundleIdentifier $bundleIdentifier" Payload/"$app"/Info.plist
+    echo "Resigning \"$app\" with bundle identifier \"$bundleIdentifier\""
+    /usr/libexec/PlistBuddy -x -c "Set :CFBundleIdentifier $bundleIdentifier" Payload/"$app"/Info.plist
 else
-  echo "Resigning \"$app\" with existing bundle identifier \"$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Payload/"$app"/Info.plist)\""
+    echo "Resigning \"$app\" with existing bundle identifier \"$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Payload/"$app"/Info.plist)\""
 fi
 
 if [[ -e Payload/$app/Frameworks ]]; then
-  cd Payload/"$app"/Frameworks
-  echo "Resigning embedded Swift libraries..."
-  swiftLibraries=$(find . -name '*dylib')
-  SDK_PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/"
-  for dylib in $swiftLibraries; do
-    codesign -f -s "$distributionCertificate" "$dylib"
-  done
-  frameworks=$(find . -name '*framework')
-  echo "Resigning embedded frameworks..."
-  for framework in $frameworks; do
-    codesign -f -s "$distributionCertificate" "$framework"
-  done
-  cd ../../..
+    cd Payload/"$app"/Frameworks
+    echo "Resigning embedded Swift libraries..."
+    swiftLibraries=$(find . -name '*dylib')
+    SDK_PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos/"
+    for dylib in $swiftLibraries; do
+        codesign -f -s "$distributionCertificate" "$dylib"
+    done
+    frameworks=$(find . -name '*framework')
+    echo "Resigning embedded frameworks..."
+    for framework in $frameworks; do
+        codesign -f -s "$distributionCertificate" "$framework"
+    done
+    cd ../../..
 fi
 
 echo "Resigning \"$app\" with certificate \"$distributionCertificate\"..."
