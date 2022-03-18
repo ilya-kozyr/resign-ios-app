@@ -50,6 +50,14 @@ security cms -D -i "$provisioningProfile" > ProvisioningProfile.plist 2>&1
 echo "Extracting \"Entitlements\" from ProvisioningProfile.plist and writing to Entitlements.plist..."
 /usr/libexec/PlistBuddy -x -c 'Print Entitlements' ProvisioningProfile.plist > Entitlements.plist 2>&1
 
+new_provisioning_app_id=$(/usr/libexec/PlistBuddy -c 'Print :application-identifier' Entitlements.plist)
+if [[ "$new_provisioning_app_id" == *"*"* ]]; then
+    team_id=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.developer.team-identifier' ProvisioningProfile.plist)
+    info_plist_app_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Payload/"$app"/Info.plist)
+    echo "A wildcard provisioning profile was provided, updating application-identifier in the Entitlements.plist to $team_id.$info_plist_app_id"
+    /usr/libexec/PlistBuddy -c "Set :application-identifier $team_id.$info_plist_app_id" Entitlements.plist
+fi
+
 echo "Embedding \"$provisioningProfile\" into \"$app\"..."
 cp "$provisioningProfile" Payload/"$app"/embedded.mobileprovision
 if [[ -n $bundleIdentifier ]]; then
